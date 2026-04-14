@@ -1,0 +1,294 @@
+HallReverb_NOGUI 使用说明
+
+一、在 VS Code 里是否需要重新构建
+
+需要。
+
+只要你改过这些内容之一，就应该重新构建：
+- C++ 源码，例如 Source/Main.cpp、Source/HallReverb.cpp、Source/HallReverb.h
+- CMake 文件，例如 CMakeLists.txt、Source/CMakeLists.txt
+- 第三方头文件，例如 Source/third_party/dr_wav.h
+
+如果你什么代码都没改，只是换一组命令行参数重新处理音频，那么不需要重新构建，直接运行现成的 exe 就可以。
+
+
+二、VS Code 里如何重新构建
+
+前提：
+- 你已经安装了 VS Code 的 CMake Tools 扩展
+- 工程已经用 CMake 成功配置过至少一次
+
+推荐流程：
+
+1. 打开命令面板
+- 快捷键：Ctrl+Shift+P
+
+2. 如果是第一次或切换编译器，先执行：
+- CMake: Select a Kit
+- 选择 Visual Studio 对应的编译工具链
+
+3. 重新配置工程
+- CMake: Configure
+
+4. 编译工程
+- CMake: Build
+
+5. 如果你想彻底重来一次：
+- CMake: Clean Rebuild
+
+常见情况：
+- 改了 .cpp/.h：通常执行一次 `CMake: Build` 就够了
+- 改了 CMakeLists.txt：先 `CMake: Configure`，再 `CMake: Build`
+- 如果 VS Code 状态有点乱：直接 `CMake: Clean Rebuild`
+
+
+三、生成出的可执行文件
+
+当前 Debug 构建输出通常在：
+- build/HallReverb_NOGUI.exe
+
+命令行帮助：
+- .\build\HallReverb_NOGUI.exe --help
+
+
+四、当前处理方式说明
+
+当前程序已经按流式块处理：
+- 外层默认每 40ms 作为一个处理块
+- 内层 DSP 现在也严格按传入整块处理
+- 不再在 HallReverb 内部额外切成 512 samples
+
+也就是说：
+- 如果你传入 `--frame-ms 40`
+- 那么 Main.cpp 每次送进 DSP 的就是完整 40ms
+- DSP 内部也按这个完整 40ms 一次处理
+
+
+五、命令行参数总表
+
+说明：
+- 默认值来自当前 HallReverb 构造函数和命令行默认配置
+- 推荐范围是经验范围，不是硬性限制
+- 其中 Hz 表示频率，ms 表示毫秒
+
+1. 处理块参数
+
+参数名：--frame-ms
+默认值：40.0
+含义：离线流式处理时，每次送入 DSP 的帧长，单位毫秒
+推荐范围：10.0 到 100.0
+备注：
+- 你当前目标就是 40ms
+- 一般建议保持和实时调用方一致
+
+
+2. 输出混合参数
+
+参数名：--dry
+默认值：0.8
+含义：直达声电平，未加混响的原始信号比例
+推荐范围：0.0 到 1.0
+
+参数名：--early-level
+默认值：0.1
+含义：早期反射输出电平
+推荐范围：0.0 到 1.0
+
+参数名：--early-send
+默认值：0.2
+含义：送入 late reverb 的 early reflection 比例
+推荐范围：0.0 到 1.0
+
+参数名：--late-level
+默认值：0.2
+含义：后期混响尾音电平
+推荐范围：0.0 到 1.0
+
+
+3. Early Reflections 参数
+
+参数名：--early-output-hpf
+默认值：4.0
+含义：早期反射输出高通截止频率
+推荐范围：4.0 到 400.0
+
+参数名：--early-output-lpf
+默认值：16000.0
+含义：早期反射输出低通截止频率
+推荐范围：2000.0 到 20000.0
+
+参数名：--early-room-size
+默认值：0.5
+含义：早期反射房间尺寸系数
+推荐范围：0.0 到 1.0
+
+参数名：--early-stereo-width
+默认值：1.0
+含义：早期反射立体声宽度
+推荐范围：0.0 到 1.2
+
+
+4. Late Reverb 参数
+
+参数名：--late-ap-feedback
+默认值：0.63
+含义：FDN 环路中 allpass diffuser 的反馈强度
+推荐范围：0.2 到 0.9
+
+参数名：--late-crossover-high
+默认值：3600.0
+含义：late reverb 高频衰减分频点
+推荐范围：1000.0 到 10000.0
+
+参数名：--late-crossover-low
+默认值：500.0
+含义：late reverb 低频衰减分频点
+推荐范围：80.0 到 1200.0
+
+参数名：--late-decay
+默认值：0.4
+含义：混响时间 RT60 主控制
+推荐范围：0.1 到 8.0
+备注：
+- 这个值越大，尾音越长
+
+参数名：--late-decay-factor-high
+默认值：0.3
+含义：高频 RT60 因子
+推荐范围：0.1 到 1.5
+备注：
+- 值越小，高频衰减越快，声音更暗
+
+参数名：--late-decay-factor-low
+默认值：1.3
+含义：低频 RT60 因子
+推荐范围：0.5 到 2.0
+备注：
+- 值越大，低频驻留越久
+
+参数名：--late-diffusion
+默认值：0.82
+含义：输入 allpass diffuser 强度
+推荐范围：0.3 到 0.95
+
+参数名：--late-lfo1-freq
+默认值：0.9
+含义：FDN 环路中第一个 LFO 频率
+推荐范围：0.1 到 4.0
+
+参数名：--late-lfo2-freq
+默认值：1.3
+含义：FDN 环路中第二个 LFO 频率
+推荐范围：0.1 到 4.0
+
+参数名：--late-lfo-factor
+默认值：0.31
+含义：FDN 环路中 LFO 调制深度
+推荐范围：0.0 到 1.0
+
+参数名：--late-output-hpf
+默认值：4.0
+含义：late reverb 输出高通截止频率
+推荐范围：4.0 到 400.0
+
+参数名：--late-output-lpf
+默认值：16000.0
+含义：late reverb 输出低通截止频率
+推荐范围：2000.0 到 20000.0
+
+参数名：--late-predelay
+默认值：8.0
+含义：late reverb 预延迟，单位毫秒
+推荐范围：0.0 到 120.0
+
+参数名：--late-room-size
+默认值：0.5
+含义：late reverb 房间尺寸
+推荐范围：0.0 到 1.0
+
+参数名：--late-spin
+默认值：2.4
+含义：输出 chorus 调制频率
+推荐范围：0.1 到 6.0
+
+参数名：--late-spin-factor
+默认值：0.3
+含义：输出 chorus 调制强度
+推荐范围：0.0 到 1.0
+
+参数名：--late-stereo-width
+默认值：1.0
+含义：late reverb 立体声宽度
+推荐范围：0.0 到 1.2
+
+参数名：--late-wander
+默认值：22.0
+含义：输出 chorus 调制长度
+推荐范围：0.0 到 60.0
+
+
+六、当前默认参数汇总
+.\build\HallReverb_NOGUI.exe clean.wav output.wav^
+ --dry 0.8^
+ --early-level 0.1^
+ --early-send 0.2^
+ --early-output-hpf 4.0^
+ --early-output-lpf 16000.0^
+ --early-room-size 0.5^
+ --early-stereo-width 1.0^
+ --late-ap-feedback 0.63^
+ --late-crossover-high 3600.0^
+ --late-crossover-low 500.0^
+ --late-decay 0.4^
+ --late-decay-factor-high 0.3^
+ --late-decay-factor-low 1.3^
+ --late-diffusion 0.82^
+ --late-lfo1-freq 0.9^
+ --late-lfo2-freq 1.3^
+ --late-lfo-factor 0.31^
+ --late-output-hpf 4.0^
+ --late-output-lpf 16000.0^
+ --late-predelay 8.0^
+ --late-room-size 0.5^
+ --late-spin 2.4^
+ --late-spin-factor 0.3^
+ --late-stereo-width 1.0^
+ --late-wander 22.0
+
+
+
+七、示例命令
+
+1. 使用默认 40ms 帧长
+
+.\build\HallReverb_NOGUI.exe clean.wav output.wav --dry 0.8 --early-level 0.1 --early-send 0.2 --late-level 0.2 --late-decay 0.4 --late-room-size 0.5
+
+2. 显式指定 40ms 帧长
+
+.\build\HallReverb_NOGUI.exe clean.wav output.wav --frame-ms 40 --dry 0.8 --late-level 0.25 --late-decay 0.6
+
+3. 更亮、更短一点的大厅感
+
+.\build\HallReverb_NOGUI.exe clean.wav output.wav --frame-ms 40 --dry 0.85 --early-level 0.12 --late-level 0.15 --late-decay 0.35 --late-output-lpf 18000 --late-predelay 6
+
+4. 更大、更暗、更长的尾音
+
+.\build\HallReverb_NOGUI.exe clean.wav output.wav --frame-ms 40 --dry 0.7 --early-level 0.08 --late-level 0.3 --late-decay 1.2 --late-room-size 0.8 --late-output-lpf 9000 --late-decay-factor-high 0.2
+
+5、用bat脚本运行
+
+./run_demo.bat
+
+
+八、建议
+
+- 如果你的实时调用端固定送 40ms，就一直保持 `--frame-ms 40`
+- 先围绕 `--dry`、`--early-level`、`--late-level`、`--late-decay`、`--late-room-size` 调，最容易听到明显变化
+- 如果声音太浑，优先降低：
+  - `--late-level`
+  - `--late-decay`
+  - `--late-decay-factor-low`
+- 如果声音太暗，优先提高：
+  - `--late-output-lpf`
+  - `--early-output-lpf`
+  - `--late-decay-factor-high`

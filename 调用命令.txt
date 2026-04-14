@@ -1,0 +1,1 @@
+.\build\Debug\HallReverb_NOGUI.exe clean.wav output.wav --dry 0.8 --early-level 0.1 --early-send 0.2 --late-level 0.2 --late-decay 10.0 --late-room-size 0.7

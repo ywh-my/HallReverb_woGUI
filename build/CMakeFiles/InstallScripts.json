@@ -1,0 +1,9 @@
+{
+	"InstallScripts" : 
+	[
+		"D:/yaowh20260225/HallReverb_NOGUI/build/cmake_install.cmake",
+		"D:/yaowh20260225/HallReverb_NOGUI/build/Source/cmake_install.cmake",
+		"D:/yaowh20260225/HallReverb_NOGUI/build/Libs/Freeverb3/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
